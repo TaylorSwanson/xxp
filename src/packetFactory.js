@@ -2,7 +2,7 @@
 
 const crypto = require("crypto");
 
-const messageHeaders = require("../../message-handlers/headers.js");
+const messageHeaders = require("./headers");
 
 
 // Constant message headers for this protocol
