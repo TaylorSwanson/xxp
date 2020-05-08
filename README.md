@@ -1,6 +1,6 @@
 # XX Protocol
 This module is for the xxp definition, containing a node module for encoding
-and decoding packets. This system is incredibly simple and doesn't stream
+and decoding packets. This system is painfully simple and doesn't stream
 read packets except over the TCP network buffer. A packet will come through as
 an object to the receiver, not as a stream of data.
 
