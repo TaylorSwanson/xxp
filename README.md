@@ -14,6 +14,8 @@ to use this protocol method for anything you'd like.
 This API isn't stable for other projects. That's why this isn't in the npm
 registry.
 
+**Fork to use stabily and modify as you want**
+
 ## Handlers
 A handler system needs to be built separately to work with different message
 types. In the following examples, a handler already exists that uses the "type"
