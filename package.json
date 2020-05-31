@@ -1,6 +1,6 @@
 {
   "name": "xxp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Simple protocol spec used by CrissCross to communicate between servers",
   "main": "src/index.js",
   "scripts": {

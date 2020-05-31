@@ -5,7 +5,7 @@ const messageHeaders = require("./headers");
 
 // Full message looks like this:
 
-// 0xFF 0x00 0xFF 0x01 0x5F (Start message)
+// 0xFF 0x00 0xFF 0x01 0x5F 0xAC (Start message)
 // 2 bytes header size unsigned (0-65535 bytes)
 // 4 bytes content size unsigned
 // Header bytes compressed JSON (must be set, at least {})
@@ -35,7 +35,7 @@ module.exports = function(stream, handlerCallback) {
   if (!handlerCallback || typeof handlerCallback != "function")
     return console.error("Cannot have a packet decoder with no handler");
 
-  let currentBuffer = Buffer.allocUnsafe(0);
+  let currentBuffer = Buffer.alloc(0);
   let hasHeader = false;
   let headerLength = 0;
   let contentLength = 0;
@@ -48,7 +48,7 @@ module.exports = function(stream, handlerCallback) {
     hasHeader = false;
     headerLength = 0;
     contentLength = 0;
-    currentBuffer = Buffer.allocUnsafe(0);
+    currentBuffer = Buffer.alloc(0);
   }
 
   stream.on("data", message => {
@@ -64,6 +64,7 @@ module.exports = function(stream, handlerCallback) {
       if (!hasHeader) {
         // Looks like we've read some garbage at the beginning of this message
         // reset and throw away data
+        console.log("Garbage at beginning of header");
         return resetStream();
       }
     }
@@ -74,10 +75,11 @@ module.exports = function(stream, handlerCallback) {
     if (headerLength === 0) {
       // Read length of header
       if ((currentBuffer.length - startMessage.length) >= headerSizeBytes) {
-        headerLength = bufHeaderLength.readUInt16BE(startMessage.length);
-
+        headerLength = currentBuffer.readUInt16BE(startMessage.length);
+        
         if (headerLength === 0) {
           // No header size in packet
+          console.log("No header size in packet");
           return resetStream();
         }
       }
@@ -87,10 +89,11 @@ module.exports = function(stream, handlerCallback) {
     if (contentLength === 0) {
       // Read length of content
       if ((currentBuffer.length - startMessage.length - headerSizeBytes) >= contentSizeBytes) {
-        contentLength = bufcontentLength.readUInt32BE(startMessage.length + headerSizeBytes);
+        contentLength = currentBuffer.readUInt32BE(startMessage.length + headerSizeBytes);
 
         if (contentLength === 0) {
           // No content size
+          console.log("No content size");
           return resetStream();
         }
       }
@@ -100,39 +103,43 @@ module.exports = function(stream, handlerCallback) {
     // If so then save it to the completeMessage
     const received = currentBuffer.length;
 
+    // Byte offset of where to find header content:
     const headerStart = startMessage.length + headerSizeBytes + contentSizeBytes;
-    // Amount of bytes received already for the header
-    const headerReceived = received - headerStart;
-    // Amount of header bytes not yet received
-    const headerPending = headerLength - headerReceived;
 
-    if (headerPending !== 0) return; // Waiting for more header
+    const wasFullHeaderReceived = received >= (headerStart + headerLength);
+    if (!wasFullHeaderReceived) return; // Waiting for more header
 
-    const nextIndex = startMessage.length + headerSizeBytes + contentSizeBytes + headerLength;
+    const nextIndex = headerStart + headerLength;
     const nextBytes = currentBuffer.slice(nextIndex);
 
     if (nextBytes.length < startContent.length) return; // Waiting for more content
 
-    const nextBytesHasContentSeparator = Buffer.compare(nextBytes.slice(0, startContent.length), startContent) === 0;
+    // This should be the separator byte string
+    const allegedSeparator = nextBytes.slice(0, startContent.length);
+    const nextBytesHasContentSeparator = Buffer.compare(allegedSeparator, startContent) === 0;
     if (!nextBytesHasContentSeparator) {
       // The header/content separator wasn't there
       return resetStream();
     }
 
+    // Separator has been passed, start reading content
+
     const contentStart = startMessage.length + headerSizeBytes + contentSizeBytes + headerLength + startContent.length;
     const contentReceived = received - contentStart;
-    const contentPending = contentLength - contentReceived;
+
+    // const remainingBytes = nextBytes.length - startContent.length;
+    const isContentPending = contentLength !== contentReceived;
 
     // Message complete
     // NOTE this makes streaming not possible
-    if (contentPending <= 0) {
+    if (!isContentPending) {
       // Must be the beginning of the next message if more comes through than stated
       // Cut out the remaining content and reset the buffer to contain the overflow data
       
-      const header = currentBuffer.slice(headerStart, headerLength);
-      const content = currentBuffer.slice(contentStart, contentLength);
+      const headerData = currentBuffer.slice(headerStart, headerStart + headerLength);
+      const contentData = currentBuffer.slice(contentStart, contentStart + contentLength);
 
-      handlerCallback({ header, content, stream });
+      handlerCallback({ header: headerData, content: contentData, stream });
       
       // Prep for next message by adding extra data to new currentBuffer
       currentBuffer = currentBuffer.slice(contentStart + contentLength);
