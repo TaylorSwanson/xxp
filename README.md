@@ -1,6 +1,6 @@
 # XX Protocol
 This module is for the xxp definition, containing a node module for encoding
-and decoding packets. This system is incredibly simple and doesn't stream
+and decoding packets. This system is painfully simple and doesn't stream
 read packets except over the TCP network buffer. A packet will come through as
 an object to the receiver, not as a stream of data.
 
@@ -13,6 +13,8 @@ to use this protocol method for anything you'd like.
 
 This API isn't stable for other projects. That's why this isn't in the npm
 registry.
+
+**Fork to use stabily and modify as you want**
 
 ## Handlers
 A handler system needs to be built separately to work with different message
