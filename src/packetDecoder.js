@@ -139,7 +139,11 @@ module.exports = function(stream, handlerCallback) {
       const headerData = currentBuffer.slice(headerStart, headerStart + headerLength);
       const contentData = currentBuffer.slice(contentStart, contentStart + contentLength);
 
-      handlerCallback({ header: headerData, content: contentData, stream });
+      handlerCallback({
+        header: JSON.parse(headerData.toString("utf8")),
+        content: JSON.parse(contentData.toString("utf8")),
+        stream
+      });
       
       // Prep for next message by adding extra data to new currentBuffer
       currentBuffer = currentBuffer.slice(contentStart + contentLength);
