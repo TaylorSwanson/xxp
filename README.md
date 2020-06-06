@@ -32,7 +32,7 @@ const num = Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER - 1));
 const packet = packetFactory.newPacket({
   header: {
     type: "network_reply_generic",
-    "xxh__responseto": header["xxh__packetid"]
+    "xxp__responseto": header["xxp__packetid"]
   },
   content: {
     number: num

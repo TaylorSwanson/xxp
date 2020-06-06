@@ -13,6 +13,9 @@ const startStreamMessage = messageHeaders.startStreaming;
 
 // Creates a packet that can be sent to any server or client
 module.exports.newPacket = function({ content, header }) {
+  if (typeof content === "function")
+    throw new Error("New packet content is a funciton, must be an object");
+  
   // Header definitions are found in the host-server module
   // The 2 + 4 indicate 16 byte UInts and 32 byte UInts respectively
   content = JSON.stringify(content);
@@ -25,8 +28,8 @@ module.exports.newPacket = function({ content, header }) {
   // xxh is short for crisscrossheader
   // Metadata could be useful for later features
   const packetId = crypto.randomBytes(8).toString("hex");
-  header["xxh__packetid"] = packetId;
-  header["xxh__sendtime"] = Date.now();
+  header["xxp__packetid"] = packetId;
+  header["xxp__sendtime"] = Date.now();
   
   const headerJson = JSON.stringify(header);
   const contentJson = JSON.stringify(content);

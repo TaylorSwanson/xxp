@@ -31,7 +31,7 @@ const contentSizeBytes = 4; // Number of bytes to represent length of content
 
 // Handling of the stream must be done externally of this function, and this
 // function shouldn't care about that (will discard unfinished messages)
-module.exports = function(stream, handlerCallback) {
+module.exports = function(socket, handlerCallback) {
   if (!handlerCallback || typeof handlerCallback != "function")
     return console.error("Cannot have a packet decoder with no handler");
 
@@ -40,8 +40,8 @@ module.exports = function(stream, handlerCallback) {
   let headerLength = 0;
   let contentLength = 0;
 
-  function resetStream() {
-    console.log("Stream was reset because the message was damaged");
+  function resetSocket() {
+    console.log("Socket was reset because the message was damaged");
 
     // Reset and throw everything away
     hasHeader = false;
@@ -50,7 +50,7 @@ module.exports = function(stream, handlerCallback) {
     currentBuffer = Buffer.alloc(0);
   }
 
-  stream.on("data", message => {
+  socket.on("data", message => {
     // Build up message
     currentBuffer = Buffer.concat([currentBuffer, message]);
 
@@ -64,7 +64,7 @@ module.exports = function(stream, handlerCallback) {
         // Looks like we've read some garbage at the beginning of this message
         // reset and throw away data
         console.log("Garbage at beginning of header");
-        return resetStream();
+        return resetSocket();
       }
     }
 
@@ -79,7 +79,7 @@ module.exports = function(stream, handlerCallback) {
         if (headerLength === 0) {
           // No header size in packet
           console.log("No header size in packet");
-          return resetStream();
+          return resetSocket();
         }
       }
     }
@@ -93,7 +93,7 @@ module.exports = function(stream, handlerCallback) {
         if (contentLength === 0) {
           // No content size
           console.log("No content size");
-          return resetStream();
+          return resetSocket();
         }
       }
     }
@@ -118,7 +118,7 @@ module.exports = function(stream, handlerCallback) {
     const nextBytesHasContentSeparator = Buffer.compare(allegedSeparator, startContent) === 0;
     if (!nextBytesHasContentSeparator) {
       // The header/content separator wasn't there
-      return resetStream();
+      return resetSocket();
     }
 
     // Separator has been passed, start reading content
@@ -142,14 +142,14 @@ module.exports = function(stream, handlerCallback) {
         return handlerCallback({
           header: undefined,
           content: undefined,
-          stream
+          socket
         });
       }
 
       handlerCallback({
         header: JSON.parse(headerData.toString("utf8")),
         content: JSON.parse(contentData.toString("utf8")),
-        stream
+        socket
       });
       
       // // Prep for next message by adding extra data to new currentBuffer
