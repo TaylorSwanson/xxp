@@ -42,7 +42,6 @@ module.exports = function(stream, handlerCallback) {
 
   function resetStream() {
     console.log("Stream was reset because the message was damaged");
-    console.log(currentBuffer).toString("base64");
 
     // Reset and throw everything away
     hasHeader = false;
@@ -139,17 +138,25 @@ module.exports = function(stream, handlerCallback) {
       const headerData = currentBuffer.slice(headerStart, headerStart + headerLength);
       const contentData = currentBuffer.slice(contentStart, contentStart + contentLength);
 
+      if (!headerData || !contentData) {
+        return handlerCallback({
+          header: undefined,
+          content: undefined,
+          stream
+        });
+      }
+
       handlerCallback({
         header: JSON.parse(headerData.toString("utf8")),
         content: JSON.parse(contentData.toString("utf8")),
         stream
       });
       
-      // Prep for next message by adding extra data to new currentBuffer
-      currentBuffer = currentBuffer.slice(contentStart + contentLength);
-      hasHeader = false;
-      headerLength = 0;
-      contentLength = 0;
+      // // Prep for next message by adding extra data to new currentBuffer
+      // currentBuffer = currentBuffer.slice(contentStart + contentLength);
+      // hasHeader = false;
+      // headerLength = 0;
+      // contentLength = 0;
     }
 
   });
