@@ -20,7 +20,7 @@ module.exports.newPacket = function({ content, header }) {
   // The 2 + 4 indicate 16 byte UInts and 32 byte UInts respectively
   content = JSON.stringify(content);
 
-  if (!content.length) content = "";
+  if (typeof content === "undefined" || !content.length) content = "";
   if (typeof header === "undefined" || typeof header !== "object") 
     header = {};
 
