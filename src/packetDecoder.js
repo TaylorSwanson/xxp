@@ -40,8 +40,8 @@ module.exports = function(socket, handlerCallback) {
   let headerLength = 0;
   let contentLength = 0;
 
-  function resetSocket() {
-    console.log("Socket was reset because the message was damaged");
+  function resetSocket(gracious) {
+    if (!gracious) console.log("Socket was reset because the message was damaged");
 
     // Reset and throw everything away
     hasHeader = false;
@@ -151,6 +151,9 @@ module.exports = function(socket, handlerCallback) {
         content: JSON.parse(contentData.toString("utf8")),
         socket
       });
+
+      // Gracious reset for next message
+      resetSocket(true);
       
       // // Prep for next message by adding extra data to new currentBuffer
       // currentBuffer = currentBuffer.slice(contentStart + contentLength);

@@ -21,8 +21,7 @@ module.exports.newPacket = function({ content, header }) {
   content = JSON.stringify(content);
 
   if (typeof content === "undefined" || !content.length) content = "";
-  if (typeof header === "undefined" || typeof header !== "object") 
-    header = {};
+  if (typeof header === "undefined" || typeof header !== "object") header = {};
 
   // Attach a small amount of metadata
   // xxh is short for crisscrossheader
