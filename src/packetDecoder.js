@@ -154,7 +154,7 @@ module.exports = function(socket, handlerCallback) {
 
       // Graceful reset for next message
       // Next message might already be part of this data
-      if (contentReceived > contentLength) {
+      if (message.toString("utf8") > currentBuffer.toString("utf8").length) {
         const nextMessage = Buffer.from(contentReceived.substring(contentLength));
         resetSocket(true, nextMessage);
       } else {
