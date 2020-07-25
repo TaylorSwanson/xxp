@@ -40,14 +40,14 @@ module.exports = function(socket, handlerCallback) {
   let headerLength = 0;
   let contentLength = 0;
 
-  function resetSocket(gracious) {
-    if (!gracious) console.log("Socket was reset because the message was damaged");
+  function resetSocket(graceful = false, nextContent = Buffer.alloc(0)) {
+    if (!graceful) console.log("Socket was reset because the message was damaged");
 
     // Reset and throw everything away
     hasHeader = false;
     headerLength = 0;
     contentLength = 0;
-    currentBuffer = Buffer.alloc(0);
+    currentBuffer = nextContent;
   }
 
   socket.on("data", message => {
@@ -152,8 +152,14 @@ module.exports = function(socket, handlerCallback) {
         socket
       });
 
-      // Gracious reset for next message
-      resetSocket(true);
+      // Graceful reset for next message
+      // Next message might already be part of this data
+      if (contentReceived > contentLength) {
+        const nextMessage = Buffer.from(contentReceived.substring(contentLength));
+        resetSocket(true, nextMessage);
+      } else {
+        resetSocket(true);
+      }
       
       // // Prep for next message by adding extra data to new currentBuffer
       // currentBuffer = currentBuffer.slice(contentStart + contentLength);
